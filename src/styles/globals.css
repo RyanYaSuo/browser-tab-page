@@ -1,0 +1,109 @@
+/* ─── Liquid Glass — Solarium Design Tokens ─── */
+
+:root,
+:root[data-theme="dark"] {
+  /* Page background (dark) */
+  --lg-page-bg:
+    radial-gradient(ellipse 70% 60% at 12% 10%,  rgba(80, 130, 255, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 70% at 90% 90%,  rgba(170, 100, 255, 0.40) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(40, 80, 220, 0.30)  0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 20%,  rgba(255, 120, 180, 0.18) 0%, transparent 55%),
+    linear-gradient(160deg, #050a1a 0%, #0a1228 50%, #060d20 100%);
+
+  --lg-glass-bg:     rgba(18, 24, 38, 0.70);
+  --lg-glass-border: rgba(255, 255, 255, 0.10);
+  --lg-glass-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.07) inset;
+  --lg-dock-bg:      rgba(18, 24, 38, 0.55);
+
+  --lg-text-1: rgba(255, 255, 255, 0.92);
+  --lg-text-2: rgba(255, 255, 255, 0.65);
+  --lg-text-3: rgba(255, 255, 255, 0.40);
+  --lg-text-4: rgba(255, 255, 255, 0.22);
+
+  --lg-fill-1: rgba(255, 255, 255, 0.14);
+  --lg-fill-2: rgba(255, 255, 255, 0.07);
+  --lg-fill-3: rgba(255, 255, 255, 0.04);
+
+  --lg-separator: rgba(255, 255, 255, 0.08);
+
+  --lg-hover-bg: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] {
+  /* Graphite light — neutral, warm-grey */
+  --lg-page-bg:
+    radial-gradient(ellipse 70% 60% at 12% 10%,  rgba(180, 185, 195, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 70% at 90% 90%,  rgba(160, 165, 180, 0.30) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(200, 205, 215, 0.30) 0%, transparent 60%),
+    linear-gradient(160deg, #ececee 0%, #e2e3e7 50%, #d8d9dd 100%);
+
+  --lg-glass-bg:     rgba(255, 255, 255, 0.68);
+  --lg-glass-border: rgba(0, 0, 0, 0.08);
+  --lg-glass-shadow: 0 8px 32px rgba(50, 55, 70, 0.10), 0 1px 0 rgba(255,255,255,0.7) inset;
+  --lg-dock-bg:      rgba(255, 255, 255, 0.45);
+
+  --lg-text-1: rgba(15, 20, 30, 0.92);
+  --lg-text-2: rgba(15, 20, 30, 0.68);
+  --lg-text-3: rgba(15, 20, 30, 0.48);
+  --lg-text-4: rgba(15, 20, 30, 0.26);
+
+  --lg-fill-1: rgba(255, 255, 255, 0.65);
+  --lg-fill-2: rgba(255, 255, 255, 0.45);
+  --lg-fill-3: rgba(255, 255, 255, 0.30);
+
+  --lg-separator: rgba(15, 20, 30, 0.10);
+
+  --lg-hover-bg: rgba(15, 20, 30, 0.06);
+}
+
+input::placeholder, textarea::placeholder { color: var(--lg-text-3); }
+
+/* Accents stay constant */
+:root {
+  --lg-accent:  #6c8cff;
+  --lg-green:   #30d158;
+  --lg-yellow:  #ffd60a;
+  --lg-orange:  #ff9f0a;
+  --lg-red:     #ff453a;
+  --lg-purple:  #bf5af2;
+}
+
+* { box-sizing: border-box; }
+::-webkit-scrollbar          { width: 4px; height: 4px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--lg-fill-1); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lg-fill-1); }
+
+*:focus-visible { outline: 2px solid var(--lg-accent); outline-offset: 2px; border-radius: 4px; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn  { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin     { to   { transform: rotate(360deg); } }
+@keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.lg-card-enter { animation: fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+.lg-card-enter:nth-child(1) { animation-delay: 0.05s; }
+.lg-card-enter:nth-child(2) { animation-delay: 0.10s; }
+.lg-card-enter:nth-child(3) { animation-delay: 0.15s; }
+.lg-card-enter:nth-child(4) { animation-delay: 0.20s; }
+.lg-card-enter:nth-child(5) { animation-delay: 0.25s; }
+.lg-card-enter:nth-child(6) { animation-delay: 0.30s; }
+
+/* Theme transition — only on root, so mode-switch mounts don't fade their bg */
+html { transition: color 250ms ease; }
+
+/* Drag-and-drop visuals */
+.lg-dragging { opacity: 0.4; transform: scale(0.97); }
+.lg-drop-target { outline: 2px dashed var(--lg-accent); outline-offset: -4px; }
