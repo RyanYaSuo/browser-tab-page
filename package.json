@@ -6,7 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "build:ext": "vite build && cp public/manifest.json public/icon-*.png dist/"
+    "build:ext": "vite build && cp public/manifest.json public/icon-*.png dist/",
+    "setup:ext": "npm run build:ext && echo '✅ 扩展已构建。打开 chrome://extensions → 开启开发者模式 → 加载已解压的扩展 → 选择 dist/'"
   },
   "dependencies": {
     "lucide-react": "0.487.0",

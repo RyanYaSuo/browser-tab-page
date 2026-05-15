@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bookmark, Folder, X } from "lucide-react";
 import { HeroSection } from "./HeroSection";
+import { WeatherWidget } from "./WeatherWidget";
 import { BookmarkEditor } from "./BookmarkEditor";
 import { FolderEditor } from "./FolderEditor";
 import { useSettings, TabBookmark, TabFolder } from "../contexts/SettingsContext";
@@ -391,6 +392,10 @@ export function TabsView({ bookmarksHidden = false }: TabsViewProps) {
         }}
       >
         <HeroSection large={bookmarksHidden} />
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <WeatherWidget />
       </div>
 
       <div
