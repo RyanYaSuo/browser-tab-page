@@ -29,15 +29,9 @@ jobs:
           echo "repo=${{ github.repository }}" >> "$GITHUB_OUTPUT"
           echo "ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
 
-      - name: Send to Feishu Bot
+      - name: Send to Feishu via Webhook
         run: |
-          TOKEN=$(curl -s -X POST "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal" \
-            -H "Content-Type: application/json" \
-            -d "{\"app_id\":\"${{ secrets.FEISHU_APP_ID }}\",\"app_secret\":\"${{ secrets.FEISHU_APP_SECRET }}\"}" \
-            | python3 -c "import json,sys; print(json.load(sys.stdin).get('tenant_access_token',''))")
-          [ -z "$TOKEN" ] && exit 1
           MSG="📦 ${{ steps.summary.outputs.repo }} 有更新！\n\n**分支**: ${{ steps.summary.outputs.ref }}\n**提交者**: ${{ steps.summary.outputs.author }}\n**提交数**: ${{ steps.summary.outputs.commits }}\n**修改文件**: ${{ steps.summary.outputs.changed_files }} 个"
-          curl -s -X POST "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id" \
-            -H "Authorization: Bearer $TOKEN" \
+          curl -s -X POST "${{ secrets.FEISHU_WEBHOOK }}" \
             -H "Content-Type: application/json" \
-            -d "{\"receive_id\":\"${{ secrets.FEISHU_USER_OPEN_ID }}\",\"msg_type\":\"text\",\"content\":\"{\\\"text\\\":\\\"$MSG\\\"}\"}"
+            -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$MSG\"}}"
