@@ -15,44 +15,29 @@ jobs:
       - name: Generate commit summary
         id: summary
         run: |
-          PREV_SHA="\${{ github.event.before }}"
-          CURR_SHA="\${{ github.sha }}"
-
-          TOTAL_COMMITS=\$(git rev-list --count "\$PREV_SHA..\$CURR_SHA" 2>/dev/null || echo 1)
-          FEATS=\$(git log "\$PREV_SHA..\$CURR_SHA" --oneline --no-decorate 2>/dev/null | grep -ci 'feat\|feature' || echo 0)
-          FIXES=\$(git log "\$PREV_SHA..\$CURR_SHA" --oneline --no-decorate 2>/dev/null | grep -ci 'fix\|bug' || echo 0)
-          CHANGED_FILES=\$(git diff --name-only "\$PREV_SHA..\$CURR_SHA" 2>/dev/null | wc -l | xargs)
-          INSERTIONS=\$(git diff --shortstat "\$PREV_SHA..\$CURR_SHA" 2>/dev/null | grep -oP '\d+(?= insertion)' || echo 0)
-          DELETIONS=\$(git diff --shortstat "\$PREV_SHA..\$CURR_SHA" 2>/dev/null | grep -oP '\d+(?= deletion)' || echo 0)
-          COMMIT_LOG=\$(git log "\$PREV_SHA..\$CURR_SHA" --oneline --no-decorate 2>/dev/null | head -20)
-          AUTHOR=\$(git log -1 --format="%an" "\$CURR_SHA" 2>/dev/null || echo "unknown")
-
-          echo "commits=\$TOTAL_COMMITS" >> \$GITHUB_OUTPUT
-          echo "author=\$AUTHOR" >> \$GITHUB_OUTPUT
-          echo "feats=\$FEATS" >> \$GITHUB_OUTPUT
-          echo "fixes=\$FIXES" >> \$GITHUB_OUTPUT
-          echo "changed_files=\$CHANGED_FILES" >> \$GITHUB_OUTPUT
-          echo "insertions=\$INSERTIONS" >> \$GITHUB_OUTPUT
-          echo "deletions=\$DELETIONS" >> \$GITHUB_OUTPUT
-          echo "repo=\${{ github.repository }}" >> \$GITHUB_OUTPUT
-          echo "ref=\${{ github.ref_name }}" >> \$GITHUB_OUTPUT
+          PREV="${{ github.event.before }}"
+          CURR="${{ github.sha }}"
+          TOTAL="1"
+          if git merge-base --is-ancestor "$PREV" "$CURR" 2>/dev/null; then
+            TOTAL=$(git rev-list --count "$PREV..$CURR" 2>/dev/null || echo "1")
+          fi
+          AUTHOR="$(git log -1 --format='%an' "$CURR" 2>/dev/null || echo 'unknown')"
+          FILES=$(git diff --name-only "$PREV..$CURR" 2>/dev/null | wc -l | xargs || echo "0")
+          echo "commits=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+          echo "changed_files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "repo=${{ github.repository }}" >> "$GITHUB_OUTPUT"
+          echo "ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Send to Feishu Bot
-        env:
-          COMMITS: \${{ steps.summary.outputs.commits }}
-          AUTHOR: \${{ steps.summary.outputs.author }}
-          FEATS: \${{ steps.summary.outputs.feats }}
-          FIXES: \${{ steps.summary.outputs.fixes }}
-          FILES: \${{ steps.summary.outputs.changed_files }}
-          INS: \${{ steps.summary.outputs.insertions }}
-          DELS: \${{ steps.summary.outputs.deletions }}
-          REPO: \${{ steps.summary.outputs.repo }}
-          REF: \${{ steps.summary.outputs.ref }}
         run: |
-          TOKEN_RESP=\$(curl -s -X POST "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"             -H "Content-Type: application/json"             -d '{"app_id":"'\${{ secrets.FEISHU_APP_ID }}'","app_secret":"'\${{ secrets.FEISHU_APP_SECRET }}'"}')
-          TOKEN=\$(echo "\$TOKEN_RESP" | python3 -c "import json,sys; print(json.load(sys.stdin).get('tenant_access_token',''))")
-          [ -z "\$TOKEN" ] && { echo "Token failed"; exit 1; }
-
-          MSG="📦 \$REPO 有更新！\n\n**分支**: \$REF\n**提交者**: \$AUTHOR\n**提交数**: \$COMMITS\n\n**变更统计**:\n- ✨ 新功能: \$FEATS\n- 🐛 修复: \$FIXES\n- 📄 修改文件: \$FILES 个 (+\$INS/-\$DELS)"
-
-          curl -s -X POST "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id"             -H "Authorization: Bearer \$TOKEN"             -H "Content-Type: application/json"             -d '{"receive_id":"'\${{ secrets.FEISHU_USER_OPEN_ID }}'","msg_type":"text","content":"{\"text\":\"'\$MSG'\"}"}'
+          TOKEN=$(curl -s -X POST "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal" \
+            -H "Content-Type: application/json" \
+            -d "{\"app_id\":\"${{ secrets.FEISHU_APP_ID }}\",\"app_secret\":\"${{ secrets.FEISHU_APP_SECRET }}\"}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin).get('tenant_access_token',''))")
+          [ -z "$TOKEN" ] && exit 1
+          MSG="📦 ${{ steps.summary.outputs.repo }} 有更新！\n\n**分支**: ${{ steps.summary.outputs.ref }}\n**提交者**: ${{ steps.summary.outputs.author }}\n**提交数**: ${{ steps.summary.outputs.commits }}\n**修改文件**: ${{ steps.summary.outputs.changed_files }} 个"
+          curl -s -X POST "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"receive_id\":\"${{ secrets.FEISHU_USER_OPEN_ID }}\",\"msg_type\":\"text\",\"content\":\"{\\\"text\\\":\\\"$MSG\\\"}\"}"
