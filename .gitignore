@@ -5,3 +5,5 @@ dist/
 *.local
 key
 oss-token
+.env
+backups/
