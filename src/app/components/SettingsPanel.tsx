@@ -73,7 +73,7 @@ function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }
     githubToken, setGithubToken,
     gistId, setGistId,
     syncStatus, syncError,
-    testConnection, createGist, connectToGist,
+    testConnection, autoConnectGist, createGist, connectToGist,
   } = useSettings();
 
   const [tokenDraft, setTokenDraft] = useState(githubToken);
@@ -107,7 +107,14 @@ function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }
     setTesting(true);
     setTestResult(null);
     const ok = await testConnection(token);
-    if (ok) setGithubToken(token);
+    if (ok) {
+      setGithubToken(token);
+      // Auto-detect existing Gist in the cloud
+      const found = await autoConnectGist(token);
+      if (found) {
+        setConnectResult("ok");
+      }
+    }
     setTestResult(ok ? "ok" : "fail");
     setTesting(false);
   };

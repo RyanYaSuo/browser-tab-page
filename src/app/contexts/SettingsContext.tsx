@@ -125,6 +125,7 @@ interface Ctx extends Settings {
   autoTheme: Theme | null;
   setThemeOverride: (t: Theme | null) => void;
   testConnection: (token: string) => Promise<boolean>;
+  autoConnectGist: (token: string) => Promise<boolean>;
   createGist: () => Promise<string | null>;
   connectToGist: (gistId: string) => Promise<boolean>;
   bumpWallpaperCache: (id: string) => void;
@@ -179,7 +180,7 @@ const SettingsCtx = createContext<Ctx | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
-  const { syncStatus, syncError, testConnection: testGist, fetchData, createGist: createGistApi, saveData } = useGistSync();
+  const { syncStatus, syncError, testConnection: testGist, fetchData, findExistingGist, createGist: createGistApi, saveData } = useGistSync();
   const initialized = useRef(false);
 
   // Auto-detected luminance for URL-based wallpapers
@@ -231,13 +232,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    if (!settings.githubToken || !settings.gistId) return;
-    fetchData(settings.githubToken, settings.gistId).then(data => {
-      if (data) {
-        setSettings(s => ({ ...s, ...data }));
-      }
-    });
-  }, [settings.githubToken, settings.gistId, fetchData]);
+    if (!settings.githubToken) return;
+    if (settings.gistId) {
+      // Already have both token and gistId → load data
+      fetchData(settings.githubToken, settings.gistId).then(data => {
+        if (data) setSettings(s => ({ ...s, ...data }));
+      });
+    } else {
+      // Have token but no gistId → auto-detect existing Gist
+      findExistingGist(settings.githubToken).then(id => {
+        if (id) {
+          fetchData(settings.githubToken, id).then(data => {
+            if (data) setSettings(s => ({ ...s, ...data, gistId: id }));
+          });
+        }
+      });
+    }
+  }, [settings.githubToken, settings.gistId, fetchData, findExistingGist]);
 
   // Debounce save to Gist on settings changes (cloud-only fields)
   const prevCloudRef = useRef<string>("");
@@ -292,6 +303,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return testGist(token);
   }, [testGist]);
 
+  const autoConnectGist = useCallback(async (token: string) => {
+    if (!token) return false;
+    const existingId = await findExistingGist(token);
+    if (!existingId) return false;
+    const data = await fetchData(token, existingId);
+    if (data) {
+      setSettings(s => ({ ...s, ...data, gistId: existingId }));
+      return true;
+    }
+    return false;
+  }, [findExistingGist, fetchData]);
+
   const createGist = useCallback(async () => {
     if (!settings.githubToken) return null;
     const id = await createGistApi(settings.githubToken, pickCloudData(settings));
@@ -321,7 +344,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setGithubToken, setGistId,
       autoTheme,
       setThemeOverride,
-      testConnection, createGist, connectToGist,
+      testConnection, autoConnectGist, createGist, connectToGist,
       bumpWallpaperCache,
     }}>
       {children}

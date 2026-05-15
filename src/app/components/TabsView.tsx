@@ -339,6 +339,7 @@ export function TabsView({ bookmarksHidden = false }: TabsViewProps) {
 
   const ungrouped = tabBookmarks.filter(b => !b.folderId);
   const inFolder = (fid: string) => tabBookmarks.filter(b => b.folderId === fid);
+  const isEmpty = tabFolders.length === 0 && ungrouped.length === 0;
 
   const openNewBookmark = (folderId?: string) => {
     setEditingBookmark(null);
@@ -403,10 +404,40 @@ export function TabsView({ bookmarksHidden = false }: TabsViewProps) {
         }}
       >
         <div className="max-w-[960px] mx-auto">
-          <div
-            className="grid gap-3"
-            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))" }}
-          >
+          {isEmpty ? (
+            <div
+              className="flex flex-col items-center justify-center gap-3 py-16 select-none"
+              style={{ animation: "fadeIn 0.5s ease" }}
+            >
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  width: 56, height: 56, borderRadius: 20,
+                  background: "var(--lg-fill-1)",
+                  color: T3,
+                }}
+              >
+                <Bookmark size={24} />
+              </div>
+              <span style={{ fontSize: 14, color: T2 }}>
+                还没有书签，右键点击空白处添加
+              </span>
+              <button
+                onClick={() => openNewBookmark()}
+                style={{
+                  height: 36, padding: "0 20px", borderRadius: 18,
+                  background: accent, color: "white",
+                  fontSize: 13, fontWeight: 500,
+                }}
+              >
+                添加第一个书签
+              </button>
+            </div>
+          ) : (
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))" }}
+            >
             {tabFolders.map(f => (
               <FolderTile
                 key={f.id}
@@ -437,8 +468,8 @@ export function TabsView({ bookmarksHidden = false }: TabsViewProps) {
                 onDrop={onDropOnBookmark(b.id)}
               />
             ))}
-
           </div>
+        )}
         </div>
       </div>
 

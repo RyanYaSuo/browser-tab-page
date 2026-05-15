@@ -36,6 +36,33 @@ export function useGistSync() {
     "User-Agent": "browser-tab-page",
   });
 
+  /** Find an existing Gist that has our settings file */
+  const findExistingGist = useCallback(async (token: string): Promise<string | null> => {
+    setSyncStatus("connecting");
+    setSyncError(null);
+    try {
+      // List user's gists (paginated, check first 3 pages)
+      for (let page = 1; page <= 3; page++) {
+        const res = await fetch(`${GITHUB_API}/gists?per_page=30&page=${page}`, { headers: headers(token) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const gists: any[] = await res.json();
+        for (const gist of gists) {
+          if (gist.files?.[GIST_FILENAME]) {
+            setSyncStatus("idle");
+            return gist.id;
+          }
+        }
+        if (gists.length < 30) break; // no more pages
+      }
+      setSyncStatus("idle");
+      return null; // not found
+    } catch (e: any) {
+      setSyncStatus("error");
+      setSyncError(e.message || "查找失败");
+      return null;
+    }
+  }, []);
+
   /** Test if token is valid */
   const testConnection = useCallback(async (token: string): Promise<boolean> => {
     setSyncStatus("connecting");
@@ -121,5 +148,5 @@ export function useGistSync() {
     }, 2000);
   }, []);
 
-  return { syncStatus, syncError, testConnection, fetchData, createGist, saveData };
+  return { syncStatus, syncError, testConnection, fetchData, findExistingGist, createGist, saveData };
 }

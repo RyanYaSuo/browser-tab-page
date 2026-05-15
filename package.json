@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "build:ext": "vite build && cp public/manifest.json public/icon-*.png dist/"
   },
   "dependencies": {
     "lucide-react": "0.487.0",
@@ -18,6 +19,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "4.7.0",
+    "ali-oss": "^6.23.0",
     "tailwindcss": "4.1.12",
     "typescript": "^6.0.3",
     "vite": "6.3.5"

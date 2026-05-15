@@ -28,23 +28,34 @@ function AppShell() {
   const imageUrl = getImageUrl(wallpaper, customWallpaperUrl, wallpaperCacheBust);
   const [loadedUrl, setLoadedUrl] = useState<string | null>(imageUrl);
   const preloadRef = useRef<HTMLImageElement | null>(null);
+  const [prevGradient, setPrevGradient] = useState<string | null>(null);
+  const gradientRef = useRef<string>(getGradientBg(wallpaper));
 
   // Preload image wallpapers — always fall through to gradient instantly
   useEffect(() => {
     if (!imageUrl) {
-      // CSS gradient — no loading needed
       setLoadedUrl(null);
       return;
     }
-    // Start loading new image
     const img = new Image();
     preloadRef.current = img;
     let cancelled = false;
     img.onload = () => { if (!cancelled) setLoadedUrl(imageUrl); };
-    img.onerror = () => { if (!cancelled) setLoadedUrl(null); }; // fallback to gradient
+    img.onerror = () => { if (!cancelled) setLoadedUrl(null); };
     img.src = imageUrl;
     return () => { cancelled = true; };
   }, [imageUrl]);
+
+  // Gradient crossfade: show old gradient, animate it out
+  useEffect(() => {
+    const cur = getGradientBg(wallpaper);
+    if (cur !== gradientRef.current) {
+      setPrevGradient(gradientRef.current);
+      gradientRef.current = cur;
+      const t = setTimeout(() => setPrevGradient(null), 600);
+      return () => clearTimeout(t);
+    }
+  }, [wallpaper]);
 
   return (
     <div
@@ -57,7 +68,17 @@ function AppShell() {
     >
       {/* Wallpaper layer */}
       <div className="fixed inset-0" style={{ zIndex: 0 }}>
-        {/* Gradient base — shows when no image wallpaper, or while image is loading */}
+        {/* Previous gradient — crossfades out */}
+        {prevGradient && (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: prevGradient,
+              animation: "fadeOut 600ms ease forwards",
+            }}
+          />
+        )}
+        {/* Current gradient base — shows when no image wallpaper, or while image is loading */}
         <div
           className="absolute inset-0 transition-opacity duration-500"
           style={{

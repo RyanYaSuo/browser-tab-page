@@ -6,6 +6,13 @@ interface Props {
   large?: boolean;
 }
 
+function greeting(h: number): string {
+  if (h >= 5 && h < 12) return "早上好";
+  if (h >= 12 && h < 14) return "中午好";
+  if (h >= 14 && h < 18) return "下午好";
+  return "晚上好";
+}
+
 export function HeroSection({ large = false }: Props) {
   const [now, setNow] = useState(new Date());
 
@@ -14,8 +21,10 @@ export function HeroSection({ large = false }: Props) {
     return () => clearInterval(t);
   }, []);
 
-  const hh = now.getHours().toString().padStart(2, "0");
-  const mm = now.getMinutes().toString().padStart(2, "0");
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const hh = h.toString().padStart(2, "0");
+  const mm = m.toString().padStart(2, "0");
   const dateStr = now.toLocaleDateString("zh-CN", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   });
@@ -25,11 +34,27 @@ export function HeroSection({ large = false }: Props) {
   return (
     <div
       className="flex flex-col items-center gap-3 px-4 select-none"
-      style={{ animation: "fadeIn 0.6s ease-out" }}
+      style={{ animation: "fadeIn 0.8s cubic-bezier(0.22,1,0.36,1)" }}
     >
+      <p
+        style={{
+          fontSize: large ? 20 : 16,
+          color: "var(--lg-text-2)",
+          fontWeight: 500,
+          letterSpacing: 1,
+          textShadow: "0 1px 6px rgba(0,0,0,0.25)",
+          animation: "fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both",
+        }}
+      >
+        {greeting(h)}，Cupid
+      </p>
       <div
         className="flex items-end gap-2"
-        style={{ lineHeight: 1, fontVariantNumeric: "tabular-nums" }}
+        style={{
+          lineHeight: 1,
+          fontVariantNumeric: "tabular-nums",
+          animation: "fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both",
+        }}
       >
         <span
           style={{
@@ -45,7 +70,15 @@ export function HeroSection({ large = false }: Props) {
           {mm}
         </span>
       </div>
-      <p style={{ fontSize: large ? 16 : 14, color: T3, marginTop: -8, textShadow: "0 1px 6px rgba(0,0,0,0.25)" }}>
+      <p
+        style={{
+          fontSize: large ? 16 : 14,
+          color: T3,
+          marginTop: -8,
+          textShadow: "0 1px 6px rgba(0,0,0,0.25)",
+          animation: "fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both",
+        }}
+      >
         {dateStr}
       </p>
     </div>
