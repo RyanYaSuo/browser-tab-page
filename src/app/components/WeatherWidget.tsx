@@ -46,12 +46,34 @@ export function WeatherWidget() {
 
     async function fetchWeather() {
       try {
-        // Step 1: Get location from IP
-        const locRes = await fetch("https://ip-api.com/json/?fields=city,lat,lon", {
-          signal: AbortSignal.timeout(5000),
-        });
-        const loc = await locRes.json();
-        if (!loc.lat || !loc.lon) throw new Error("无法定位");
+        // Step 1: Get location — try browser geolocation first, then IP fallback
+        let lat: number, lon: number, city = "";
+
+        const geoPos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 })
+        ).catch(() => null);
+
+        if (geoPos) {
+          lat = geoPos.coords.latitude;
+          lon = geoPos.coords.longitude;
+          // Reverse geocode via Open-Meteo
+          const geoRes = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${lat.toFixed(2)},${lon.toFixed(2)}&count=1&language=zh&format=json`,
+            { signal: AbortSignal.timeout(4000) }
+          );
+          const geoData = await geoRes.json();
+          city = geoData.results?.[0]?.name || "当前位置";
+        } else {
+          // IP fallback
+          const locRes = await fetch("https://ipapi.co/json/", {
+            signal: AbortSignal.timeout(5000),
+          });
+          const loc = await locRes.json();
+          if (!loc.latitude || !loc.longitude) throw new Error("无法定位");
+          lat = loc.latitude;
+          lon = loc.longitude;
+          city = loc.city || loc.region || "未知";
+        }
 
         // Step 2: Get weather from Open-Meteo
         const wRes = await fetch(
@@ -62,7 +84,7 @@ export function WeatherWidget() {
 
         if (!cancelled) {
           setWeather({
-            city: loc.city,
+            city,
             temp: Math.round(w.current.temperature_2m),
             feelsLike: Math.round(w.current.apparent_temperature),
             code: w.current.weather_code,
